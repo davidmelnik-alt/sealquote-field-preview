@@ -1,0 +1,10 @@
+<!doctype html><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>SealQuote owner report</title><p id="message">Return to the dashboard to load your report.</p><script>
+// Only deliver records to the dashboard page. Other GitHub projects share this origin.
+try{
+ const raw=decodeURIComponent(location.hash.slice(1));history.replaceState(null,'',location.pathname);
+ const data=JSON.parse(raw);
+ if(opener && opener.location.origin===location.origin && opener.location.pathname==='/sealquote-field-preview/dashboard/'){
+  opener.postMessage(data,location.origin);
+ }
+}catch{}
+</script>
