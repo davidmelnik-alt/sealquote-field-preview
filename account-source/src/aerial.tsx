@@ -1,4 +1,5 @@
 'use client';
+import {accountRequest} from './account-request';
 import {lookupAddress} from '../lib/geocoding.mjs';
 import {useState,useRef} from 'react';
 import {MapPin,Minus,Plus,Undo2,Trash2,ArrowUp,ArrowDown,ArrowLeft,ArrowRight,Move,RotateCw,MousePointer2} from 'lucide-react';
@@ -8,7 +9,7 @@ export default function Aerial({address,zip,onUse,initial}:{address:string,zip?:
  const svg=useRef<SVGSVGElement>(null),drag=useRef<any>(null);
  const remember=()=>setUndo(u=>[...u.slice(-29),points.map(p=>[...p])]);
  const edit=(p:number[][])=>{setPoints(p);setConfirmed(false);};
- async function locate(){setBusy(true);setMatches([]);setMessage('');setCenter(null);setPoints([]);setConfirmed(false);try{const d:any=await lookupAddress(address,zip);setMatches(d.matches);if(!d.matches.length)setMessage('No matching address found. Check the full address or enter a field measurement.');if(d.matches.length===1)choose(d.matches[0]);}catch(e:any){setMessage(e.message||'Address lookup failed.');}finally{setBusy(false);}}
+ async function locate(){setBusy(true);setMatches([]);setMessage('');setCenter(null);setPoints([]);setConfirmed(false);try{const d:any=await lookupAddress(address,zip,{request:accountRequest});setMatches(d.matches);if(!d.matches.length)setMessage('No matching address found. Check the full address or enter a field measurement.');if(d.matches.length===1)choose(d.matches[0]);}catch(e:any){setMessage(e.message||'Address lookup failed.');}finally{setBusy(false);}}
  function choose(m:any){const c=mercator(m.lat,m.lng);setMatched(m.address);setCenter(c);setSpan(160);setPoints(starterOutline(c,160));setUndo([]);setMode('edit');setImageReady(false);setImageFailed(false);setConfirmed(false);setMatches([]);setMessage('Drag the starter shape onto the correct driveway, then adjust its corners. This is a template, not an automatically detected driveway.');}
  function move(dx:number,dy:number,zoom=1){if(!center)return;const c=[center[0]+dx*span,center[1]+dy*span],s=Math.max(40,Math.min(1280,span*zoom));setPoints(reprojectOutline(points,center,span,c,s));setCenter(c);setSpan(s);setUndo([]);setImageReady(false);setImageFailed(false);}
  function template(w:number,h:number,shape='rectangle'){if(!center)return;remember();edit(starterOutline(center,span,w,h,shape));setMode('edit');setMessage('Starter template placed. Move and resize it to match the pavement.');}
