@@ -1,4 +1,21 @@
 import {useEffect,useMemo,useState} from 'react';
+function placeholder(image:HTMLImageElement){
+ const canvas=document.createElement('canvas');
+ canvas.width=32;canvas.height=32;
+ const context=canvas.getContext('2d');
+ if(!context)return false;
+ try{
+  context.drawImage(image,0,0,32,32);
+  const pixels=context.getImageData(0,0,32,32).data;
+  const background=pixels[0];
+  if(background<180)return false;
+  let uniform=0;
+  for(let i=0;i<pixels.length;i+=4){
+   if(Math.abs(pixels[i]-background)<12&&Math.abs(pixels[i+1]-background)<12&&Math.abs(pixels[i+2]-background)<12)uniform++;
+  }
+  return uniform/1024>.9;
+ }catch{return false}
+}
 const HALF=20037508.342789244;
 export default function AerialTiles({center,span,onReady}:{center:number[],span:number,onReady:(ready:boolean)=>void}){
  const [loaded,setLoaded]=useState<Set<string>>(()=>new Set());
@@ -22,6 +39,6 @@ export default function AerialTiles({center,span,onReady}:{center:number[],span:
  useEffect(()=>{onReady(ready)},[ready,center[0],center[1],span]);
  useEffect(()=>{setSlow(false);if(ready)return;const timer=setTimeout(()=>setSlow(true),10000);return()=>clearTimeout(timer)},[ready,center[0],center[1],span,attempt]);
  return <><div style={{position:'absolute',inset:0,overflow:'hidden',pointerEvents:'none'}}>
- {tiles.map(t=><img key={t.key+':'+attempt} src={'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+t.key+'?blankTile=false'} alt="" draggable={false} onError={()=>{if(t.visible)setAvailableZoom(current=>Math.max(14,Math.min(current,t.zoom-1)))}} onLoad={()=>setLoaded(old=>new Set(old).add(t.key))} style={{position:'absolute',left:t.left+'%',top:t.top+'%',width:t.size+'%',height:t.size+'%',maxWidth:'none',objectFit:'fill'}}/>)}
+ {tiles.map(t=><img key={t.key+':'+attempt} src={'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+t.key+'?blankTile=false'} alt="" crossOrigin="anonymous" draggable={false} onError={()=>{if(t.visible)setAvailableZoom(current=>Math.max(14,Math.min(current,t.zoom-1)))}} onLoad={event=>{if(placeholder(event.currentTarget)){if(t.visible)setAvailableZoom(current=>Math.max(14,Math.min(current,t.zoom-1)));return;}setLoaded(old=>new Set(old).add(t.key));}} style={{position:'absolute',left:t.left+'%',top:t.top+'%',width:t.size+'%',height:t.size+'%',maxWidth:'none',objectFit:'fill'}}/>)}
  </div>{!ready&&<div role="status" style={{position:'absolute',top:12,left:12,zIndex:4,background:'#fff',color:'#14253c',padding:'8px 12px',borderRadius:8,fontSize:13}}>{slow?<><span>Imagery is slow. </span><button onClick={()=>{setLoaded(new Set());setAttempt(n=>n+1)}}>Retry imagery</button></>:'Loading map tiles…'}</div>}</>;
 }
